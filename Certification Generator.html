@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- ✅ يجعل الصفحة متجاوبة مع الهواتف والأجهزة اللوحية -->
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <!-- ✅ عنوان علامة تبويب المتصفح -->
+    <title>Certificate Generator — Management Dose</title>
+<!-- Certificate Generator | مولّد الشهادات -->
+    <style>
+      /* =========================================================
+         ✅ التنسيقات العامة /  الأساسية
+         ========================================================= */
+
+      /* ✅ إخبار المتصفح بأننا نستخدم واجهة داكنة (يؤثر على عناصر النماذج المدمجة) */
+      :root {
+        color-scheme: dark;
+      }
+
+      /* ✅ استخدام أحجام متوقعة (يشمل الحشو والحدود ضمن العرض والارتفاع) */
+      * {
+        box-sizing: border-box;
+      }
+
+      /* ✅ خلفية الصفحة + الخط العام */
+      body {
+        margin: 0;
+        padding: 24px;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial,
+          sans-serif;
+        background: #0b1020;
+        color: #e9eefc;
+      }
+
+      /* =========================================================
+         ✅ تخطيط الصفحة الرئيسي
+         اليسار: لوحة النموذج
+         اليمين: معاينة الشهادة
+         ========================================================= */
+      .page {
+        max-width: 1200px;
+        margin: 0 auto;
+
+        /* ✅ تخطيط بعمودين (عرض ثابت للنموذج + معاينة مرنة) */
+        display: grid;
+        grid-template-columns: 420px 1fr;
+        gap: 18px;
+        align-items: start;
+      }
+
+      /* ✅ تنسيق لوحة قابل لإعادة الاستخدام (يُستخدم للنموذج وشريط الأدوات) */
+      .panel {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        padding: 16px;
+      }
+
+      .panel h2 {
+        margin: 0 0 10px;
+        font-size: 16px;
+        letter-spacing: 0.2px;
+      }
+
+      /* ✅ نص إرشادي أسفل العنوان */
+      .hint {
+        margin: 0 0 14px;
+        font-size: 12px;
+        opacity: 0.85;
+        line-height: 1.4;
+      }
+
+      /* ✅ مجموعة إدخال لكل حقل (التسمية + حقل الإدخال + نص الخطأ) */
+      .row {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      label {
+        font-size: 12px;
+        opacity: 0.9;
+      }
+
+      /* ✅ تنسيقات مشتركة لحقول الإدخال */
+      input,
+      textarea {
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(0, 0, 0, 0.35);
+        color: #e9eefc;
+        padding: 10px 12px;
+        outline: none;
+        font-size: 14px;
+      }
+
+      textarea {
+        resize: vertical; /* ✅ السماح للمستخدم بتغيير الحجم عموديًا فقط */
+        min-height: 70px;
+      }
+
+      /* ✅ تمييز حقل الإدخال عند التركيز عليه */
+      input:focus,
+      textarea:focus {
+        border-color: rgba(255, 255, 255, 0.35);
+      }
+
+      /* ✅ تحسين مظهر حقل رفع الملفات بإضافة الحشو أيضًا */
+      input[type="file"] {
+        padding: 10px 12px;
+      }
+
+      /* ✅ نص مساعد صغير لرفع الملف */
+      .fileHint {
+        font-size: 12px;
+        opacity: 0.8;
+        line-height: 1.35;
+      }
+
+      /* ✅ رسالة الخطأ: مخفية افتراضيًا */
+      .error {
+        display: none;
+        font-size: 12px;
+        color: #ffb4b4;
+        line-height: 1.25;
+      }
+
+      /* ✅ إذا كان الحقل غير صالح: تحويل الحد إلى الأحمر + إظهار نص الخطأ */
+      .row.invalid input,
+      .row.invalid textarea {
+        border-color: rgba(255, 90, 90, 0.75);
+      }
+      .row.invalid .error {
+        display: block;
+      }
+
+      /* ✅ صف الأزرار */
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+
+      /* ✅ التنسيق الأساسي للزر */
+      button {
+        cursor: pointer;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.08);
+        color: #e9eefc;
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-weight: 650;
+        letter-spacing: 0.2px;
+      }
+
+      button:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      /* ✅ الزر الأساسي (الطباعة) */
+      button.primary {
+        background: rgba(90, 170, 255, 0.22);
+        border-color: rgba(90, 170, 255, 0.35);
+      }
+      button.primary:hover {
+        background: rgba(90, 170, 255, 0.28);
+      }
+
+      /* ✅ حالة الزر المعطّل */
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      /* ✅ سطر الحالة أسفل الأزرار */
+      .status {
+        margin-top: 10px;
+        font-size: 12px;
+        opacity: 0.9;
+      }
+
+      /* ✅ حالة النجاح باللون الأخضر */
+      .status.ok {
+        color: #b8ffcb;
+      }
+
+      /* ✅ حالة الخطأ باللون الأحمر */
+      .status.bad {
+        color: #ffb4b4;
+      }
+
+      /* ✅ الحاوية في الجانب الأيمن (شريط الأدوات + معاينة الشهادة) */
+      .previewWrap {
+        display: grid;
+        gap: 12px;
+      }
+
+      /* ✅ شريط أدوات صغير أعلى الشهادة */
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+
+      .toolbar .small {
+        font-size: 12px;
+        opacity: 0.85;
+      }
+
+      /* =========================================================
+         ✅ إعدادات الطباعة
+         - A4 أفقي
+         - إزالة الهوامش
+         - إخفاء النموذج والأدوات
+         ========================================================= */
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+
+      @media print {
+        /* ✅ إجبار الطباعة على استخدام الألوان نفسها (بعض المتصفحات تخفّف الألوان افتراضيًا) */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        /* ✅ استخدام حجم A4 كاملًا وإزالة الحشو والهوامش */
+        html,
+        body {
+          width: 297mm;
+          height: 210mm;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #07070a !important;
+          overflow: hidden !important;
+        }
+
+        /* ✅ إخفاء النموذج الأيسر + شريط الأدوات العلوي أثناء الطباعة */
+        .panel,
+        .toolbar {
+          display: none !important;
+        }
+
+        /* ✅ جعل تخطيط الصفحة بعمود واحد أثناء الطباعة */
+        .page {
+          display: block !important;
+          max-width: none !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        /* ✅ تغيير حجم الشهادة وموضعها لتتناسب بشكل جيد مع ورقة A4 */
+        .mdc-cert {
+          margin-top: 20px !important;
+          padding: 0 !important;
+          width: 850px !important;
+          height: 600px !important;
+          transform-origin: top left;
+          transform: translate(32px, 0px) scale(1.25);
+        }
+      }
+
+      /* ✅ في الشاشات الصغيرة، ترتيب اللوحات عموديًا */
+      @media (max-width: 980px) {
+        .page {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* =========================================================
+         ✅ تنسيقات الشهادة (صندوق المعاينة)
+         ========================================================= */
+
+      /* ✅ الحاوية الرئيسية للشهادة */
+      .mdc-cert {
+        width: 800px;
+        height: 600px;
+        box-sizing: border-box;
+        padding: 26px;
+        background: #07070a;
+        color: #f6f1dd;
+        font-family: Georgia, "Times New Roman", serif;
+      }
+
+      /* ✅ إطار الشهادة الخارجي */
+      .mdc-frame-outer {
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        padding: 14px;
+        border: 3px solid rgba(216, 177, 92, 0.75);
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      /* ✅ إطار الشهادة الداخلي + تحديد الموضع */
+      .mdc-frame-inner {
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        padding: 26px 34px 22px;
+        border: 1px solid rgba(216, 177, 92, 0.35);
+        background: rgba(0, 0, 0, 0.15);
+        position: relative; /* ✅ مطلوب للعناصر ذات الموضع المطلق مثل المعلومات العلوية والقسم السفلي */
+        overflow: hidden;
+      }
+
+      /* ✅ معلومات أعلى الشهادة (تاريخ الإصدار / الرقم التسلسلي) */
+      .mdc-meta {
+        position: absolute;
+        top: 14px;
+        left: 34px;
+        right: 34px;
+        z-index: 5;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        color: rgba(246, 241, 221, 0.9);
+        pointer-events: none; /* ✅ منع تحديد/النقر على المعلومات عند السحب أو التحديد */
+      }
+
+      .mdc-metaCell {
+        vertical-align: top;
+      }
+
+      .mdc-left {
+        text-align: left;
+      }
+
+      .mdc-right {
+        text-align: right;
+        padding-right: 38px;
+      }
+
+      .mdc-metaLabel {
+        opacity: 0.75;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .mdc-metaValue {
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .mdc-mono {
+        font-family: "Courier New", monospace;
+        letter-spacing: 0.2px;
+      }
+
+      /* ✅ منطقة الشعار */
+      .mdc-header {
+        text-align: center;
+        margin-top: 0;
+        position: relative;
+        z-index: 2;
+      }
+
+      /* ✅ تنسيق صورة الشعار */
+      .mdc-logo {
+        display: block;
+        margin: 0 auto 10px;
+        border-radius: 10px;
+
+        /* ✅ ضبط حجم الشعار بشكل متجاوب */
+        width: 30%;
+        height: auto;
+      }
+
+      .mdc-school {
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+        padding-top: 5px;
+        letter-spacing: 1.6px;
+        text-transform: uppercase;
+        color: rgba(246, 241, 221, 0.88);
+      }
+
+      /* ✅ العنوان الرئيسي للشهادة */
+      .mdc-title {
+        text-align: center;
+        margin: 16px 0 6px;
+        font-size: 25px;
+        font-weight: 700;
+        color: #f7e7b6;
+        letter-spacing: 0.4px;
+        position: relative;
+        z-index: 2;
+      }
+
+      /* ✅ العنوان الفرعي أسفل العنوان */
+      .mdc-subtitle {
+        text-align: center;
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+        padding: 5px 0;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: rgba(246, 241, 221, 0.8);
+        margin-bottom: 0;
+        position: relative;
+        z-index: 2;
+      }
+
+      /* ✅ اسم الطالب (بحجم كبير) */
+      .mdc-name {
+        text-align: center;
+        font-size: 31px;
+        padding: 5px 0;
+        font-weight: 700;
+        color: #fff3c9;
+        margin: 6px 0 10px;
+        letter-spacing: 0.2px;
+        position: relative;
+        z-index: 2;
+
+        /* ✅ إذا كان الاسم طويلًا جدًا، إظهار ... بدلًا من إفساد التخطيط */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* ✅ نص الفقرة العادي */
+      .mdc-text {
+        text-align: center;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        color: rgba(246, 241, 221, 0.85);
+        margin: 6px 0;
+        position: relative;
+        z-index: 2;
+      }
+
+      /* ✅ اسم الدورة */
+      .mdc-course {
+        text-align: center;
+        font-size: 18px;
+        font-weight: 700;
+        color: #f7e7b6;
+        padding: 5px 0;
+        margin: 4px 0 14px;
+        position: relative;
+        z-index: 2;
+      }
+
+      /* ✅ الخط الفاصل الذهبي */
+      .mdc-divider {
+        height: 1px;
+        width: 75%;
+        margin: 10px auto 16px;
+        background: rgba(216, 177, 92, 0.55);
+        position: relative;
+        z-index: 5;
+      }
+
+      /* ✅ المنطقة السفلية (الختم + التوقيع) موضوعة بشكل مطلق في الأسفل */
+      .mdc-bottom {
+        position: absolute;
+        left: 34px;
+        right: 34px;
+        bottom: 7px;
+        z-index: 2;
+      }
+
+      .mdc-bottomTable {
+        width: 100%;
+      }
+
+      /* ✅ أحجام أعمدة الجدول ومحاذاتها */
+      .mdc-sigCol,
+      .mdc-sealCol {
+        width: 65%;
+        vertical-align: bottom;
+        padding-left: 0;
+      }
+
+      .mdc-sigCol {
+        box-sizing: border-box;
+        text-align: right;
+      }
+
+      /* ✅ حجم ثابت لصورة التوقيع (يمنع الصور الكبيرة من إفساد التخطيط) */
+      .mdc-sigImg {
+        width: 250px !important;
+        height: 100px !important;
+        max-width: 100% !important;
+
+        /* ✅ contain يحافظ على ظهور التوقيع كاملًا (بدون قص) */
+        object-fit: contain;
+        object-position: center;
+
+        display: block;
+        margin-left: auto;
+      }
+
+      /* ✅ الخط الموجود أسفل التوقيع */
+      .mdc-sigLine {
+        height: 1px;
+        width: 82%;
+        background: rgba(216, 177, 92, 0.55);
+        margin: 8px 0;
+        margin-left: auto;
+      }
+
+      /* ✅ اسم المدرب أسفل التوقيع */
+      .mdc-sigName {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        padding-right: 4px;
+        color: rgba(246, 241, 221, 0.92);
+        letter-spacing: 0.3px;
+      }
+
+      .mdc-sigSpacer {
+        height: 12px;
+      }
+
+      .mdc-sealCol {
+        padding-left: 10px;
+        box-sizing: border-box;
+        vertical-align: bottom;
+      }
+
+      .mdc-sealImg {
+        display: inline-block;
+      }
+
+      /* ✅ نص التذييل في منتصف الجزء السفلي */
+      .mdc-footer {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 20px;
+        text-align: center;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        letter-spacing: 1px;
+        color: rgba(246, 241, 221, 0.65);
+        pointer-events: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="page">
+      <!-- ======================================================
+           ✅ الجانب الأيسر: لوحة النموذج (مدخلات المستخدم)
+           ====================================================== -->
+      <div class="panel" id="formPanel">
+        <h2>Certificate Fields</h2>
+        <p class="hint">
+          Type values below — the certificate updates instantly.
+          <br />
+          Validation rules apply. Print is enabled only when all fields are ✅
+          valid.
+        </p>
+
+        <!-- ✅ مجموعة إدخال اسم الطالب -->
+        <div class="row" id="rowName">
+          <label for="studentName">Student Name</label>
+          <input
+            id="studentName"
+            type="text"
+            placeholder="e.g., Ahmed Al-Khaled"
+            autocomplete="off"
+          />
+          <div class="error">Name is required (min 3 characters).</div>
+        </div>
+
+        <!-- ✅ مجموعة إدخال اسم الدورة -->
+        <div class="row" id="rowCourse">
+          <label for="courseName">Course Name</label>
+          <textarea
+            id="courseName"
+            placeholder="e.g., Goal Setting: Crafting and Achieving Your Objectives."
+          ></textarea>
+          <div class="error">Course name is required (min 6 characters).</div>
+        </div>
+
+        <!-- ✅ مجموعة إدخال اسم المدرب -->
+        <div class="row" id="rowInstructor">
+          <label for="instructorName">Instructor Name</label>
+          <input
+            id="instructorName"
+            type="text"
+            placeholder="e.g., Dr. Mohammed Abu-Hadhoud"
+            autocomplete="off"
+          />
+          <div class="error">
+            Instructor name is required (min 3 characters).
+          </div>
+        </div>
+
+        <!-- ✅ رفع صورة التوقيع -->
+        <div class="row" id="rowSignature">
+          <label for="signatureFile">Signature Image</label>
+          <input id="signatureFile" type="file" accept="image/*" />
+          <div class="fileHint">
+            Upload a PNG/JPG/WebP. It will update the signature instantly.
+          </div>
+          <div class="error">Please upload a signature image.</div>
+        </div>
+
+        <!-- ✅ تاريخ الإصدار -->
+        <div class="row" id="rowIssued">
+          <label for="issuedDate">Issued Date</label>
+          <input id="issuedDate" type="date" />
+          <div class="error">Please select an issued date.</div>
+        </div>
+
+        <!-- ✅ الرقم التسلسلي -->
+        <div class="row" id="rowSerial">
+          <label for="serial">Certificate Serial</label>
+          <input
+            id="serial"
+            type="text"
+            placeholder="e.g., MD-2025-000123"
+            autocomplete="off"
+          />
+          <div class="error">
+            Serial is required (letters/numbers/- only, min 6).
+          </div>
+        </div>
+
+        <!-- ✅ الإجراءات -->
+        <div class="actions">
+          <button type="button" id="btnFillDemo">Fill Demo</button>
+          <button type="button" id="btnReset">Reset</button>
+          <button type="button" class="primary" id="btnPrint" disabled>
+            Print A4 Landscape
+          </button>
+        </div>
+
+        <!-- ✅ رسالة نصية توضح ما إذا كان النموذج صالحًا أم لا -->
+        <div class="status" id="statusLine"></div>
+      </div>
+
+      <!-- ======================================================
+           ✅ الجانب الأيمن: لوحة المعاينة (مخرجات الشهادة)
+           ====================================================== -->
+      <div class="previewWrap">
+        <!-- ✅ شريط الأدوات أعلى الشهادة -->
+        <div class="toolbar panel">
+          <div class="small">
+            Preview (Print will output ONLY the certificate)
+          </div>
+          <div class="small" id="validBadge">❌ Not ready to print</div>
+        </div>
+
+        <!-- ✅ معاينة الشهادة -->
+        <div class="mdc-cert" id="cert">
+          <div class="mdc-frame-outer">
+            <div class="mdc-frame-inner">
+              <!-- ✅ المعلومات العلوية -->
+              <table class="mdc-meta" width="100%">
+                <tr>
+                  <td class="mdc-metaCell mdc-left" width="60%">
+                    <div class="mdc-metaLabel">Issued Date</div>
+                    <div class="mdc-metaValue" id="certIssued">—</div>
+                  </td>
+                  <td class="mdc-metaCell mdc-right">
+                    <div class="mdc-metaLabel">Certificate Serial</div>
+                    <div class="mdc-metaValue mdc-mono" id="certSerial">—</div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- ✅ شعار الرأس -->
+              <div class="mdc-header">
+                <img class="mdc-logo" src="Logo.png" alt="Logo" />
+              </div>
+
+              <div class="mdc-title">Certificate of Completion</div>
+              <div class="mdc-subtitle">This is proudly presented to</div>
+
+              <!-- ✅ سيتم إدراج اسم الطالب هنا -->
+              <div class="mdc-name" id="certName">Student Name</div>
+
+              <div class="mdc-text">for successfully completing</div>
+
+              <!-- ✅ سيتم إدراج اسم الدورة هنا -->
+              <div class="mdc-course" id="certCourse">
+                Course Name Goes Here
+              </div>
+
+              <div class="mdc-divider"></div>
+
+              <!-- ✅ الختم + التوقيع -->
+              <div class="mdc-bottom">
+                <table width="100%" class="mdc-bottomTable">
+                  <tr>
+                    <!-- ✅ اليسار: الختم -->
+                    <td class="mdc-sealCol">
+                      <img
+                        class="mdc-sealImg"
+                        src="Certified.png"
+                        alt="Seal"
+                        width="110"
+                        height="110"
+                      />
+                    </td>
+
+                    <!-- ✅ اليمين: التوقيع + اسم المدرب -->
+                    <td class="mdc-sigCol">
+                      <!-- ✅ يمكن تغيير صورة التوقيع بواسطة JavaScript -->
+                      <img
+                        class="mdc-sigImg"
+                        id="certSignatureImg"
+                        src="DefaultSig.png"
+                        alt="Signature"
+                        width="250"
+                        height="100"
+                      />
+                      <div class="mdc-sigLine"></div>
+
+                      <!-- ✅ سيتم إدراج اسم المدرب هنا -->
+                      <div class="mdc-sigName" id="certInstructor">
+                        Dr. Mohammed Abu-Hadhoud
+                      </div>
+
+                      <div class="mdc-sigSpacer">&nbsp;</div>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- ✅ تذييل الموقع داخل الشهادة -->
+              <div class="mdc-footer">www.Website.com</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /* =========================================================
+         ✅ شرح الكود (مناسب للمبتدئين)
+         ---------------------------------------------------------
+         ✅ الهدف:
+            - أخذ مدخلات المستخدم (الاسم/الدورة/المدرب/التاريخ/الرقم التسلسلي/التوقيع)
+            - تحديث معاينة الشهادة مباشرة (معاينة حية)
+            - التحقق من المدخلات والسماح بالطباعة فقط عندما تكون جميع البيانات صالحة
+
+         ✅ الأفكار الرئيسية:
+            1) الحصول على عناصر DOM (حقول الإدخال وأماكن نصوص الشهادة)
+            2) تحديث معاينة الشهادة عند كتابة المستخدم
+            3) التحقق من كل حقل وإظهار الأخطاء
+            4) تفعيل زر الطباعة فقط إذا كانت جميع الحقول صالحة
+            5) التعامل مع رفع التوقيع بأمان (بدون تسرب للذاكرة)
+         ========================================================= */
+
+      /* =========================================================
+         ✅ 1) مراجع DOM (حقول الإدخال)
+         ---------------------------------------------------------
+         نخزن عناصر DOM في متغيرات حتى نتمكن من استخدامها بسهولة.
+         ========================================================= */
+      const elName = document.getElementById("studentName");
+      const elCourse = document.getElementById("courseName");
+      const elInstructor = document.getElementById("instructorName");
+      const elSignatureFile = document.getElementById("signatureFile");
+      const elIssued = document.getElementById("issuedDate");
+      const elSerial = document.getElementById("serial");
+
+      /* =========================================================
+         ✅ 2) مراجع DOM (أماكن النصوص داخل الشهادة)
+         ---------------------------------------------------------
+         هذه هي الأماكن داخل معاينة الشهادة
+         التي نُدرج فيها قيم النصوص.
+         ========================================================= */
+      const certName = document.getElementById("certName");
+      const certCourse = document.getElementById("certCourse");
+      const certInstructor = document.getElementById("certInstructor");
+      const certIssued = document.getElementById("certIssued");
+      const certSerial = document.getElementById("certSerial");
+      const certSignatureImg = document.getElementById("certSignatureImg");
+
+      /* =========================================================
+         ✅ 3) مراجع DOM (صفوف التحقق)
+         ---------------------------------------------------------
+         كل صف هو حاوية لحقل الإدخال + نص الخطأ.
+         نضيف/نزيل الفئة "invalid" لإظهار الحد الأحمر + رسالة الخطأ.
+         ========================================================= */
+      const rowName = document.getElementById("rowName");
+      const rowCourse = document.getElementById("rowCourse");
+      const rowInstructor = document.getElementById("rowInstructor");
+      const rowSignature = document.getElementById("rowSignature");
+      const rowIssued = document.getElementById("rowIssued");
+      const rowSerial = document.getElementById("rowSerial");
+
+      /* =========================================================
+         ✅ 4) مراجع DOM (الأزرار / الحالة)
+         ========================================================= */
+      const btnPrint = document.getElementById("btnPrint");
+      const btnReset = document.getElementById("btnReset");
+      const btnFillDemo = document.getElementById("btnFillDemo");
+      const statusLine = document.getElementById("statusLine");
+      const validBadge = document.getElementById("validBadge");
+
+      /* =========================================================
+         ✅ 5) إدارة الذاكرة لمعاينة التوقيع
+         ---------------------------------------------------------
+         عند تحميل ملف صورة محلي داخل <img> نستخدم:
+           URL.createObjectURL(file)
+         وهذا ينشئ رابطًا مؤقتًا.
+         يجب استدعاء:
+           URL.revokeObjectURL(oldUrl)
+         لتجنب تسرب الذاكرة عند رفع المستخدم للملف عدة مرات.
+         ========================================================= */
+      let signatureObjectUrl = null;
+
+      /* =========================================================
+         ✅ دالة مساعدة: تنسيق التاريخ (YYYY-MM-DD ← DD - MM - YYYY)
+         ---------------------------------------------------------
+         يعيد حقل التاريخ في HTML القيمة: "2025-12-23"
+         ونحن نعرضها بالشكل:       "23 - 12 - 2025"
+         ========================================================= */
+      function formatDate(yyyyMMdd) {
+        if (!yyyyMMdd) return "—"; // لم يتم اختيار أي شيء
+        const [y, m, d] = yyyyMMdd.split("-");
+        if (!y || !m || !d) return "—"; // حماية من تنسيق غير صالح
+        return `${d} - ${m} - ${y}`;
+      }
+
+      /* =========================================================
+         ✅ 6) قواعد التحقق (دالة واحدة لكل حقل)
+         ---------------------------------------------------------
+         كل دالة تُرجع:
+           ✅ true  → الحقل صالح
+           ❌ false → الحقل غير صالح
+         ========================================================= */
+
+      function validateName(value) {
+        return value.trim().length >= 3;
+      }
+
+      function validateCourse(value) {
+        return value.trim().length >= 6;
+      }
+
+      function validateInstructor(value) {
+        return value.trim().length >= 3;
+      }
+
+      function validateIssued(value) {
+        return Boolean(value); // true إذا كان التاريخ موجودًا
+      }
+
+      function validateSerial(value) {
+        const v = value.trim();
+        if (v.length < 6) return false;
+
+        // ✅ السماح فقط: الحروف والأرقام والشرطة
+        return /^[A-Za-z0-9-]+$/.test(v);
+      }
+
+      function validateSignature(fileInput) {
+        // fileInput.files هي قائمة بالملفات التي اختارها المستخدم
+        const file = fileInput.files && fileInput.files[0];
+        return Boolean(file);
+      }
+
+      /* =========================================================
+         ✅ دالة مساعدة: تطبيق فئة التحقق على الصف
+         ---------------------------------------------------------
+         إذا كان غير صالح → إضافة فئة "invalid" (تُظهر الخطأ + الحد الأحمر)
+         إذا كان صالحًا   → إزالة الفئة
+         ========================================================= */
+      function setRowValid(rowEl, isValid) {
+        rowEl.classList.toggle("invalid", !isValid);
+      }
+
+      /* =========================================================
+         ✅ 7) تحديث نص معاينة الشهادة
+         ---------------------------------------------------------
+         تقوم هذه الدالة بقراءة القيم من حقول الإدخال،
+         ثم تدرجها في معاينة الشهادة.
+         وفي حال كان الحقل فارغًا، يتم عرض نص نائب مناسب.
+         ========================================================= */
+      function updateCertificate() {
+        certName.textContent = elName.value.trim() || "Student Name";
+
+        certCourse.textContent =
+          elCourse.value.trim() || "Course Name Goes Here";
+
+        certInstructor.textContent =
+          elInstructor.value.trim() || "Instructor Name Goes Here";
+
+        certIssued.textContent = formatDate(elIssued.value);
+
+        certSerial.textContent = elSerial.value.trim() || "—";
+      }
+
+      /* =========================================================
+         ✅ 8) تطبيق التوقيع من ملف مرفوع
+         ---------------------------------------------------------
+         - قراءة الملف المختار
+         - التحقق من كونه صورة
+         - تحويله إلى رابط كائن مؤقت
+         - وضعه داخل الوسم <img src="...">
+         ========================================================= */
+      function applySignatureFromFile() {
+        const file = elSignatureFile.files && elSignatureFile.files[0];
+        if (!file) return; // لم يتم اختيار أي ملف
+
+        // ✅ التأكد من أن الملف المختار هو صورة فعلًا
+        if (!file.type || !file.type.startsWith("image/")) {
+          return;
+        }
+
+        // ✅ إلغاء رابط الكائن السابق (لمنع تسرب الذاكرة)
+        if (signatureObjectUrl) {
+          URL.revokeObjectURL(signatureObjectUrl);
+          signatureObjectUrl = null;
+        }
+
+        // ✅ إنشاء رابط مؤقت جديد وعرضه
+        signatureObjectUrl = URL.createObjectURL(file);
+        certSignatureImg.src = signatureObjectUrl;
+      }
+
+      /* =========================================================
+         ✅ 9) التحقق من جميع الحقول + التحكم في زر الطباعة
+         ---------------------------------------------------------
+         - التحقق من كل حقل
+         - تحديد الصفوف غير الصالحة
+         - السماح بالطباعة فقط عندما تكون جميع الحقول صالحة
+         ========================================================= */
+      function validateAll() {
+        const okName = validateName(elName.value);
+        const okCourse = validateCourse(elCourse.value);
+        const okInstructor = validateInstructor(elInstructor.value);
+        const okIssued = validateIssued(elIssued.value);
+        const okSerial = validateSerial(elSerial.value);
+        const okSignature = validateSignature(elSignatureFile);
+
+        // تطبيق تنسيقات التحقق المرئية على كل صف
+        setRowValid(rowName, okName);
+        setRowValid(rowCourse, okCourse);
+        setRowValid(rowInstructor, okInstructor);
+        setRowValid(rowIssued, okIssued);
+        setRowValid(rowSerial, okSerial);
+        setRowValid(rowSignature, okSignature);
+
+        // ✅ يجب أن تكون جميع القيم true للسماح بالطباعة
+        const allOk =
+          okName &&
+          okCourse &&
+          okInstructor &&
+          okIssued &&
+          okSerial &&
+          okSignature;
+
+        // ✅ تفعيل/تعطيل زر الطباعة
+        btnPrint.disabled = !allOk;
+
+        // ✅ تحديث رسائل الحالة للمستخدم
+        if (allOk) {
+          statusLine.textContent = "✅ All fields are valid. Ready to print.";
+          statusLine.className = "status ok";
+          validBadge.textContent = "✅ Ready to print";
+        } else {
+          statusLine.textContent =
+            "❌ Please fix the highlighted fields to enable printing.";
+          statusLine.className = "status bad";
+          validBadge.textContent = "❌ Not ready to print";
+        }
+
+        return allOk;
+      }
+
+      /* =========================================================
+         ✅ 10) دالة واحدة للتعامل مع أي تغيير في المدخلات
+         ---------------------------------------------------------
+         عندما يكتب المستخدم أو يغيّر أي شيء:
+         - تحديث معاينة الشهادة
+         - التحقق من جميع الحقول
+         ========================================================= */
+      function onInputChange() {
+        updateCertificate();
+        validateAll();
+      }
+
+      /* =========================================================
+         ✅ 11) الأحداث الحية (تحديثات فورية)
+         ---------------------------------------------------------
+         نستمع إلى أحداث input/change حتى يتم تحديث المعاينة مباشرة.
+         - "input"  يعمل أثناء الكتابة
+         - "change" يعمل عند الانتهاء من الاختيار (مثل حقل التاريخ)
+         ========================================================= */
+      [elName, elCourse, elInstructor, elIssued, elSerial].forEach((el) => {
+        el.addEventListener("input", onInputChange);
+        el.addEventListener("change", onInputChange);
+      });
+
+      /* =========================================================
+         ✅ 12) حدث رفع التوقيع
+         ---------------------------------------------------------
+         عندما يختار المستخدم صورة:
+         - عرضها في الشهادة
+         - إعادة التحقق من صحة البيانات
+         ========================================================= */
+      elSignatureFile.addEventListener("change", () => {
+        applySignatureFromFile();
+        validateAll();
+      });
+
+      /* =========================================================
+         ✅ 13) زر الطباعة
+         ---------------------------------------------------------
+         - التحقق مرة أخرى (لأسباب أمنية)
+         - إذا كانت البيانات صالحة، فتح نافذة الطباعة في المتصفح
+         ========================================================= */
+      btnPrint.addEventListener("click", () => {
+        const ok = validateAll();
+        if (!ok) return;
+        window.print();
+      });
+
+      /* =========================================================
+         ✅ 14) زر إعادة الضبط
+         ---------------------------------------------------------
+         - مسح جميع حقول الإدخال
+         - استعادة التوقيع الافتراضي
+         - تحديث المعاينة + التحقق
+         ========================================================= */
+      btnReset.addEventListener("click", () => {
+        // مسح النموذج
+        elName.value = "";
+        elCourse.value = "";
+        elInstructor.value = "";
+        elIssued.value = "";
+        elSerial.value = "";
+        elSignatureFile.value = "";
+
+        // استعادة صورة التوقيع الافتراضية وتنظيف رابط الكائن
+        if (signatureObjectUrl) {
+          URL.revokeObjectURL(signatureObjectUrl);
+          signatureObjectUrl = null;
+        }
+        certSignatureImg.src = "DefaultSig.png";
+
+        onInputChange();
+      });
+
+      /* =========================================================
+         ✅ 15) زر تعبئة البيانات التجريبية
+         ---------------------------------------------------------
+         - إضافة قيم نموذجية بسرعة (مفيد للاختبار)
+         - تعيين التاريخ إلى تاريخ اليوم
+         - عرض صورة توقيع تجريبية
+         ========================================================= */
+      btnFillDemo.addEventListener("click", () => {
+        elName.value = "Mohammed Abu-Hadhoud";
+        elCourse.value =
+          "Goal Setting: Crafting and Achieving Your Objectives.";
+        elInstructor.value = "Dr. Mohammed Abu-Hadhoud";
+        elIssued.value = new Date().toISOString().slice(0, 10);
+        elSerial.value = "MD-2025-000123";
+
+        // ✅ للتجربة فقط: استخدام ملف صورة معروف
+        // Note: This does NOT validate the file-input signature,
+        // because file inputs cannot be set programmatically for security.
+        certSignatureImg.src = "sig1.png";
+
+        onInputChange();
+      });
+
+      /* =========================================================
+         ✅ 16) التهيئة (تعمل مرة واحدة عند تحميل الصفحة)
+         ---------------------------------------------------------
+         - تعبئة النصوص الافتراضية
+         - تشغيل التحقق مرة واحدة حتى تكون الواجهة صحيحة منذ البداية
+         ========================================================= */
+      onInputChange();
+    </script>
+  </body>
+</html>
